@@ -1,0 +1,41 @@
+version: 2.1
+jobs:
+  test:
+    docker:
+      - image: cimg/go:1.18
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            go mod init sendgridjp-go-example-test
+            go mod tidy
+      - run:
+          name: Setup environmental valuables
+          command: |
+            echo "API_KEY=$SENDGRID_API_KEY" >> .env
+            echo "TOS=alice@sink.sendgrid.net,bob@sink.sendgrid.net,carol@sink.sendgrid.net" >> .env
+            echo "FROM=you@example.com" >> .env
+      - run:
+          name: Show versions
+          command: |
+            go version
+            cat go.sum | grep sendgrid-go
+      - run:
+          name: Test
+          command: go test
+workflows:
+  version: 2
+#  normal_deploy_workflow:
+#    jobs:
+#      - test
+  monthly_workflow:
+    triggers:
+      - schedule:
+          cron: "0 0 2 * *"
+          filters:
+            branches:
+              only:
+                - main
+    jobs:
+      - test
